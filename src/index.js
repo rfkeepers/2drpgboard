@@ -1,5 +1,7 @@
 import m from "mithril";
+import style from "./main.css";
 
+import {Board} from "./components/board/board.js";
 
-m.render(document.body, "smurfs");
+m.mount(document.body, Board);
 
