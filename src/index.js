@@ -1,7 +1,6 @@
-import m from "mithril";
-import style from "./main.css";
+import m from 'mithril';
+import style from './main.css';
 
-import {Board} from "./components/board/board.js";
+import {Root} from './components/root.js';
 
-m.mount(document.body, Board);
-
+m.mount(document.body, Root);
