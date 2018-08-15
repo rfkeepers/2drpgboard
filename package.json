@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/rfkeepers/2drpgboard#readme",
   "dependencies": {
-    "ramda": "^0.25.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
