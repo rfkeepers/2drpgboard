@@ -1,0 +1,152 @@
+/* === core === */
+
+body {
+    background: #000000;
+    color: #cccccc;
+    font: normal 16px 'Open Sans';
+    line-height: 12px;
+    border: 0;
+    margin: 0;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+hr {    
+    border: none;
+    background-color: #ccc;
+    height: 1px;
+    margin-top: 10px;
+}
+
+.inline {
+    display: inline-block;
+}
+
+.thinpad {
+    padding: 12px;
+}
+
+/* === root === */
+
+.root {
+    display: grid;
+    grid-template-columns: 256px auto;
+    grid-template-rows: 100vh;
+    grid-template-areas:
+        "ctrls board";
+}
+
+.root-ctrls {
+    grid-area: "ctrls";
+}
+
+.root-board {
+    grid-area: "board";
+    background: darkgreen;
+    padding: 32px;
+}
+
+/* === controls === */
+
+.controls-dim {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.controls-dim__input {
+    border: none;
+    border-bottom: 4px solid #aaaaaa;
+    background: none;
+    color: #cccccc;
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+.drawer {
+    margin-top: 8px;
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-top: 1px solid #555555;
+    border-bottom: 1px solid #555555;
+    padding: 8px;
+}
+
+.drawer-body {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    flex-wrap: wrap;
+    max-height: 100%;
+    overflow: auto;
+}
+
+.drawer:last-child .drawer-body {
+    border-bottom: 1px solid #555555;
+}
+
+.drawer-opener {
+    transition: all 0.25s ease-out;
+}
+
+.drawer-open {
+    height: 168px;
+}
+
+.drawer-closed {
+    height: 0px;
+}
+
+.drawer-obj {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid #555555;
+    margin-top: 8px;
+    margin-right: 12px;
+    cursor: grab;
+    padding: 4px;
+    font-size: 14px;
+}
+
+/* === board === */
+
+.tile {
+    width: 64px;
+    height: 64px;
+    background: #ffffff;
+    color: #444444;
+    border: 1px solid #666666;
+}
+
+.tile:hover {
+    background: #cccccc;
+    color: #444444;
+    border: 1px solid blueviolet;
+}
+
+.tile-selected {
+    background: #444444;
+    color: #cccccc;
+}
+
+.tile__drop-hover {
+    background: lightgreen;
+}
