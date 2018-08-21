@@ -32,10 +32,6 @@ hr {
     display: inline-block;
 }
 
-.thinpad {
-    padding: 12px;
-}
-
 /* === root === */
 
 .root {
@@ -126,7 +122,16 @@ hr {
     font-size: 14px;
 }
 
+.drawer-obj__drag {
+    background: #444444;
+}
+
 /* === board === */
+
+.grid__row {
+    display: flex;
+    justify-content: start;
+}
 
 .tile {
     width: 64px;
@@ -134,6 +139,9 @@ hr {
     background: #ffffff;
     color: #444444;
     border: 1px solid #666666;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .tile:hover {
@@ -147,6 +155,18 @@ hr {
     color: #cccccc;
 }
 
-.tile__drop-hover {
+.tile__drop-hover-available {
+    background: lightblue !important;
+}
+
+.tile__drop-hover-unavailable {
+    background: lightcoral !important;
+}
+
+.tile__move-available {
     background: lightgreen;
+}
+
+.tile__move-unavailable {
+    background: lightgray;
 }
