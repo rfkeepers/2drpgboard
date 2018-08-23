@@ -4,12 +4,17 @@ import {EmitEvent, Events} from '../../utilities/generic.js';
 import {Properties} from '../../data/generic.js';
 import {State} from '../../global/boardState.js';
 
-function dropObj(e) {
+function dropObj(e, loc) {
     e.preventDefault();
     removeHover(e);
+    // Add Wiggle on failure!
+    // FIX NEGATE SELECTION ON RECLICK
+    if (!State.canOccupy(loc)) { return; } 
     let detail = e.dataTransfer.getData('text');
     detail = detail.split(':');
-    return getFromCatalogue(detail);
+    const occupant = getFromCatalogue(detail);
+    State.addOccupant(occupant, loc);
+    return occupant;
 };
 
 function getFromCatalogue(detail) {
@@ -18,9 +23,8 @@ function getFromCatalogue(detail) {
         return CCatalogue[detail[1]];
     case 'terrain':
         return TCatalogue[detail[1]];
-    default:
-        return undefined;
     }
+    return undefined;
 };
 
 function dragHover(e, loc) {
@@ -38,7 +42,10 @@ function dragEndHover(e) {
 
 function removeHover(e) {
     const t = getTile(e.target);
-    if (t) { t.classList.remove('tile__drop-hover-available'); }
+    if (t) {
+        t.classList.remove('tile__drop-hover-available');
+        t.classList.remove('tile__drop-hover-unavailable');
+    }
 };
 
 function getTile(e) {
@@ -57,7 +64,7 @@ function isOccupiable(occupant) {
 function attrsBasedClasses(attrs, occupant) {
     let classes = '';
     if (attrs.showMove) {
-        classes += isOccupiable(occupant) ? 'tile__move-available' : 'tile__move-unavailable';
+        classes += isOccupiable(occupant) ? 'tile__move-available' : '';
     }
     return classes;
 };
@@ -67,7 +74,7 @@ const Tile = {
     occupant: undefined,
     view(vnode) {
         return m('.tile', {
-            ondrop: e => this.occupant = dropObj(e),
+            ondrop: e => this.occupant = dropObj(e, {row: vnode.attrs.row, col: vnode.attrs.col}),
             ondragover: e => dragHover(e, {row: vnode.attrs.row, col: vnode.attrs.col}),
             ondragleave: dragEndHover, 
             onclick: _ => {
