@@ -1,37 +1,59 @@
-import {Catalogue as CCatalogue} from '../creatures/creatures.js';
-import {Catalogue as TCatalogue} from '../terrain/terrain.js';
-import {EmitEvent, Events} from '../../utilities/generic.js';
+import {Catalogue} from '../store/catalogue.js';
+import {Emit} from '../../utilities/generic.js';
 import {Properties} from '../../data/generic.js';
-import {State} from '../../global/boardState.js';
+import {Grid} from '../store/grid.js';
 
-function dropObj(e, loc) {
+const canOccupy = R.pathEq(['props', 'canOccupy'], true);
+
+/* === === */
+
+function hasMoveable(p) { return p && R.contains(Properties.hasMoveable)(p); };
+function hasFacing(p) { return p && R.contains(Properties.hasFacing)(p); };
+function hasVision(p) { return p && R.contains(Properties.hasVision)(p); };
+function getProps(vn) { return R.path(['attrs', 'selected', 'props'], vn); };
+
+function optionsSizeClass(show) { return `tile-options__popup-${show ? 'max' : 'min'}`; };
+function optionsPositionClass(row, col) {
+    return `tile-options__popup-${row < 3 ? 'bottom' : 'top'}-${col < 4 || col < (Grid.getDimensions().cols - 4) ? 'right' : 'left'}`;
+};
+const tileOptionBtn = {
+    view(vnode) {
+        return m('.tile-option', vnode.children)
+    },
+};
+
+const tileOptions = {
+    view(vnode) {
+        return m('', {style: {position: 'relative'}},
+            m('.tile-options__popup', {
+                class: `${optionsSizeClass(vnode.attrs.show)} ${optionsPositionClass(vnode.attrs.row, vnode.attrs.col)}`,
+            }, [
+                hasMoveable(getProps(vnode)) && m(tileOptionBtn, 'move'),
+                hasFacing(getProps(vnode)) && m(tileOptionBtn, 'face'),
+                hasVision(getProps(vnode)) && m(tileOptionBtn, 'vision'),
+            ]),
+        );
+    },
+};
+
+/* === === */
+
+function dropObj(e, row, col) {
     e.preventDefault();
     removeHover(e);
     // Add Wiggle on failure!
     // FIX NEGATE SELECTION ON RECLICK
-    if (!State.canOccupy(loc)) { return; } 
-    let detail = e.dataTransfer.getData('text');
-    detail = detail.split(':');
-    const occupant = getFromCatalogue(detail);
-    State.addOccupant(occupant, loc);
+    const tile = Grid.getTile(row, col);
+    if (!canOccupy(tile)) { return; }
+    Grid.emit.addOccupant({occupant: Catalogue.get(e.dataTransfer.getData('text')), row, col});
     return occupant;
 };
 
-function getFromCatalogue(detail) {
-    switch (detail[0]) {
-    case 'creature':
-        return CCatalogue[detail[1]];
-    case 'terrain':
-        return TCatalogue[detail[1]];
-    }
-    return undefined;
-};
-
-function dragHover(e, loc) {
+function dragHover(e, row, col) {
     e.preventDefault();
-    const t = getTile(e.target);
+    const t = findTileComponent(e.target);
     if (t) {
-        t.classList.add(`tile__drop-hover-${State.canOccupy(loc) ? 'available' : 'unavailable'}`);
+        t.classList.add(`tile__drop-hover-${canOccupy(Grid.getTile(row, col)) ? 'available' : 'unavailable'}`);
     }
 };
 
@@ -41,49 +63,36 @@ function dragEndHover(e) {
 };
 
 function removeHover(e) {
-    const t = getTile(e.target);
+    const t = findTileComponent(e.target);
     if (t) {
         t.classList.remove('tile__drop-hover-available');
         t.classList.remove('tile__drop-hover-unavailable');
     }
 };
 
-function getTile(e) {
-    return e.classList && e.classList.contains('tile') ? e : getTile(e.parentElement);
+function findTileComponent(e) {
+    return e.classList && e.classList.contains('tile') ? e : findTileComponent(e.parentElement);
 };
 
-function selectOccupant(curr, occ) {
-    if (!State.selectedEnt) { return occ; }
-    return State.selectedEnt == curr ? undefined : occ;
-};
-
-function isOccupiable(occupant) {
-    return !occupant || !R.contains(Properties.blocksOccupy, occupant.props);
-}
-
-function attrsBasedClasses(attrs, occupant) {
+function conditionalCss({attrs}) {
     let classes = '';
-    if (attrs.showMove) {
-        classes += isOccupiable(occupant) ? 'tile__move-available' : '';
-    }
+    classes += attrs.selected ? 'tile-selected ' : '';
+    if (attrs.showMove) classes += attrs.canMove ? 'tile-move-available ' : 'tile-move-unavailable';
     return classes;
 };
 
 const Tile = {
-    selected : undefined,
     occupant: undefined,
     view(vnode) {
         return m('.tile', {
-            ondrop: e => this.occupant = dropObj(e, {row: vnode.attrs.row, col: vnode.attrs.col}),
-            ondragover: e => dragHover(e, {row: vnode.attrs.row, col: vnode.attrs.col}),
+            ondrop: e => this.occupant = dropObj(e, vnode.attrs.row, vnode.attrs.col),
+            ondragover: e => dragHover(e, vnode.attrs.row, vnode.attrs.col),
             ondragleave: dragEndHover, 
-            onclick: _ => {
-                this.selected = selectOccupant(this.selected, this.occupant);
-                State.select(this.selected, {row: vnode.attrs.row, col: vnode.attrs.col});
-            },
-            class: `${this.selected ? 'tile-selected' : ''}, ${attrsBasedClasses(vnode.attrs, this.occupant)}`,
+            onclick: () => Grid.emit.selectTile(vnode.dom, {row: vnode.attrs.row, col: vnode.attrs.col}),
+            class: `${conditionalCss(vnode)}`,
         }, [
             m('', `${this.occupant ? this.occupant.icon : ''}`),
+            m(tileOptions, {show: vnode.attrs.showOptions, selected: vnode.attrs.selected, row: vnode.attrs.row, col: vnode.attrs.col}),
         ]);
     },
 };

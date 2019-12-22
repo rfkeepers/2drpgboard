@@ -1,12 +1,16 @@
-import {Settings} from '../../global/settings.js';
-import {EmitEvent, Events} from '../../utilities/generic.js';
+import {Grid} from '../store/grid.js';
+import {Emit} from '../../utilities/generic.js';
 import * as Creatures from '../creatures/creatures.js';
 import * as Terrain from '../terrain/terrain.js';
+
+const events = {
+    toggleDrawer: 'toggleDrawer',
+};
 
 const drawer = {
     isOpen: true,
     oncreate(vnode) {
-        most.fromEvent(Events.toggleDrawer, vnode.dom)
+        most.fromEvent(events.toggleDrawer, vnode.dom)
             .forEach(e => this.isOpen = e.detail.state);
     },
     view(vnode) {
@@ -25,10 +29,10 @@ const drawerHeader = {
     isOpen: true,
     toggleDrawer(vnode) {
         this.isOpen = !this.isOpen;
-        EmitEvent(vnode.dom, Events.toggleDrawer, {state: this.isOpen});
+        Emit(vnode.dom, events.toggleDrawer, {state: this.isOpen});
     },
     view(vnode) {
-        return m('.drawer-header', {
+        return m('.drawer__header', {
             onclick: _ => this.toggleDrawer(vnode),
         }, [
             m('', vnode.children),
@@ -38,20 +42,20 @@ const drawerHeader = {
 };
 
 const drawerBody = {
-    view(vnode) {return m('.drawer-body', vnode.children);},
+    view(vnode) {return m('.drawer__body', vnode.children);},
 };
 
 const drawerObj = {
     dragObj(e) {
-        e.target.classList.add('drawer-obj__drag');
+        e.target.classList.add('drawer__obj-drag');
         e.dataTransfer.setData("text/plain", e.target.id);
         e.dataTransfer.dropEffect = "copy";
     },
     dragEnd(e) {
-        e.target.classList.remove('drawer-obj__drag');
+        e.target.classList.remove('drawer__obj-drag');
     },
     view(vnode) {
-        return m('.drawer-obj', {
+        return m('.drawer__obj', {
             id: `${vnode.attrs.type}:${vnode.attrs.id}`,
             draggable: true,
             ondragstart: this.dragObj,
@@ -66,27 +70,48 @@ const withValsIn = o => R.values(o);
 const makeDrawerEntries = (f, o) => R.map(v => f(v), o);
 const populateDrawerWith = d => makeDrawerEntries(withDraggable(d), withValsIn(d.Catalogue));
 
+const strToInt = R.compose(
+    v => parseInt(v, 10),
+    R.replace(/\D/g, ''),
+);
+const updateDims = (dims) => R.compose(
+    R.curry(Grid.setDimensions(Grid.actions.setDimensions)),
+    R.merge(dims),
+);
+const setRowsLen = (dims) => R.compose(
+    updateDims(dims),
+    v => {return {rows: v}},
+    strToInt,
+);
+const setColsLen = (dims) => R.compose(
+    updateDims(dims),
+    v => {return {cols: v}},
+    strToInt,
+);
+
 const Controls = {
-    oninit() {Settings.setDims(Settings.dims);},
-    view() { return m('.controls', [
-        // dims
-        m('.controls-dim', [
-            m('input[type=text].controls-dim__input', {
-                style: {width: `${Settings.dims.rows.length}ch`},
-                oninput: m.withAttr('value', v => Settings.updateDim('rows', v)),
-                value: Settings.dims.rows,
-            }),
-            m('', {style: {fontSize: '32px'}}, 'x'),
-            m('input[type=text].controls-dim__input', {
-                style: {width: `${Settings.dims.cols.length}ch`},
-                oninput: m.withAttr('value', v => Settings.updateDim('cols', v)),
-                value: Settings.dims.cols,
-            }),
-        ]),
-        // drawers
-        m(drawer, {title: 'Creatures'}, populateDrawerWith(Creatures)),
-        m(drawer, {title: 'Terrain'}, populateDrawerWith(Terrain)),
-    ]);},
+    oninit() {this.dimensions = Grid.getDimensions();},
+    view() { 
+        return m('.controls', [
+            // dimensions
+            m('.controls-dim', [
+                m('input[type=text].controls__dim__input', {
+                    style: {width: `${this.dimensions.rows.toString().length}ch`},
+                    oninput: e => setRowsLen(this.dimensions)(e.target.value),
+                    value: this.dimensions.rows,
+                }),
+                m('', {style: {fontSize: '32px'}}, 'x'),
+                m('input[type=text].controls__dim__input', {
+                    style: {width: `${this.dimensions.cols.toString().length}ch`},
+                    oninput: e => setColsLen(this.dimensions)(e.target.value),
+                    value: this.dimensions.cols,
+                }),
+            ]),
+            // drawers
+            m(drawer, {title: 'Creatures'}, populateDrawerWith(Creatures)),
+            m(drawer, {title: 'Terrain'}, populateDrawerWith(Terrain)),
+        ]);
+    },
 };
 
 export {Controls};

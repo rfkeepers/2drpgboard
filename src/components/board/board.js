@@ -1,15 +1,23 @@
 import {Tile} from '../tile/tile.js';
-import {Settings} from '../../global/settings.js';
-import {State} from '../../global/boardState.js';
+import {Grid} from '../store/grid.js';
+
+const sequence = R.range(0);
 
 const Board = {
-    view() { return m('',
-        Settings.grid.map(r => 
-            m('.grid__row', r.map(c =>
-                m(Tile, State.getStateAt({row: c.row, col: c.col}))
-            ))
-        )
-    );},
+    view() {
+        return m('',
+            R.map(r => 
+                m('.grid__row', R.map(c =>
+                    m(Tile, R.mergeRight(
+                        Grid.getTile(r, c),
+                        {
+                            showMove: Grid.getCamera().showMove,
+                        })
+                    )
+                )(sequence(Grid.getDimensions().cols)))
+            )(sequence(Grid.getDimensions().rows))
+        );
+    },
 };
 
 export {Board};
